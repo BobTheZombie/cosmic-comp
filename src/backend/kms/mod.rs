@@ -51,10 +51,12 @@ use std::{
 
 mod device;
 mod drm_helpers;
+mod hdr;
 pub mod render;
 mod socket;
 mod surface;
 use device::*;
+pub use hdr::*;
 pub(crate) use surface::Surface;
 pub use surface::Timings;
 
