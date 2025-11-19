@@ -56,7 +56,7 @@ use std::{
     time::Duration,
 };
 
-use super::{drm_helpers, socket::Socket, surface::Surface};
+use super::{drm_helpers, hdr::OutputColorCharacteristics, socket::Socket, surface::Surface};
 
 #[derive(Debug)]
 pub struct EGLInternals {
@@ -941,6 +941,9 @@ fn create_output_for_conn(drm: &mut DrmDevice, conn: connector::Handle) -> Resul
     let edid_info = drm_helpers::edid_info(drm, conn)
         .inspect_err(|err| warn!(?err, "failed to get EDID for {}", interface))
         .ok();
+    let color_characteristics = edid_info
+        .as_ref()
+        .map(OutputColorCharacteristics::from_info);
     let (phys_w, phys_h) = conn_info.size().unwrap_or((0, 0));
 
     let output = Output::new(
@@ -973,6 +976,9 @@ fn create_output_for_conn(drm: &mut DrmDevice, conn: connector::Handle) -> Resul
         output
             .user_data()
             .insert_if_missing(|| EdidProduct::from(edid.vendor_product()));
+    }
+    if let Some(characteristics) = color_characteristics {
+        output.user_data().insert_if_missing(|| characteristics);
     }
     Ok(output)
 }
